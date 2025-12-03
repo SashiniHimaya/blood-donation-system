@@ -1,5 +1,7 @@
 const pool = require("../db");
 const bcrypt = require("bcrypt");
+  const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 
 // Register User
@@ -42,4 +44,55 @@ const getUsers = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, getUsers };
+// Login User
+  
+
+const loginUser = async (req, res) => {
+  try {
+    const { user_email, password } = req.body;
+
+    const userResult = await pool.query(
+      "SELECT * FROM users WHERE user_email = $1",
+      [user_email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
+
+    const user = userResult.rows[0];
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
+
+    // ✅ Create JWT token
+    const token = jwt.sign(
+      { user_id: user.user_id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // ✅ Send token in response
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        user_id: user.user_id,
+        user_name: user.user_name,
+        user_email: user.user_email,
+        role: user.role
+      }
+    });
+
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+
+module.exports = { registerUser, getUsers, loginUser };
