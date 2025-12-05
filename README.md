@@ -11,13 +11,16 @@ A RESTful API system that connects blood donors with recipients in need, built w
 - ✅ **Advanced Filtering**: Search requests by blood type, urgency, location, and status
 - ✅ **Role-Based Access**: Support for donors, recipients, and both
 - ✅ **Request Prioritization**: Automatic sorting by urgency (critical → high → medium → low)
+- ✅ **Donor-Recipient Matching**: Intelligent blood type compatibility matching
+- ✅ **Distance-Based Search**: Find nearby donors using Haversine formula
+- ✅ **Donation Management**: Express interest, confirm, and track donations
+- ✅ **Donation History**: Complete donation tracking for donors
 
 ### Coming Soon
-- ⏳ Donor-Recipient Matching Algorithm
-- ⏳ Distance-Based Search (find nearby donors)
-- ⏳ Real-time Notifications
-- ⏳ Donation History Tracking
+- ⏳ Real-time Notifications (Email/SMS)
 - ⏳ Admin Dashboard
+- ⏳ Analytics & Reporting
+- ⏳ Mobile App Integration
 
 ## 🚀 Quick Start
 
@@ -72,7 +75,11 @@ A RESTful API system that connects blood donors with recipients in need, built w
 
 6. **Test the API**
    ```bash
+   # Test user and request system
    node test-requests.js
+   
+   # Test matching system
+   node test-matching.js
    ```
 
 ## 📚 API Documentation
@@ -103,24 +110,41 @@ Authorization: Bearer <token>
   "urgency": "high",
   "hospital_name": "City Hospital",
   "city": "New York",
-  "needed_by": "2025-12-10"
-}
-```
-
 **Find Blood Requests**
 ```bash
 GET /api/requests?blood_type=A+&urgency=high&city=New York
 ```
 
-## 🗂️ Project Structure
-
+**Find Matching Donors**
+```bash
+GET /api/match/request/1/donors?maxDistance=30
 ```
-blood-donation-system/
-├── database/
-│   ├── schema.sql              # Database schema
-│   └── setup.sql              # Setup with sample data
+
+**Express Interest in Donating**
+```bash
+POST /api/match/donate/1
+Authorization: Bearer <token>
+{
+  "units": 1,
 ├── src/
 │   ├── controllers/
+│   │   ├── userController.js    # User operations
+│   │   ├── requestController.js # Blood request operations
+│   │   └── matchController.js   # Matching & donation logic
+│   ├── middleware/
+│   │   └── authMiddleware.js    # JWT authentication
+│   ├── routes/
+│   │   ├── userRoutes.js
+│   │   ├── requestRoutes.js
+│   │   └── matchRoutes.js
+│   ├── app.js                   # Express app
+│   └── db.js                    # Database connection
+├── test-requests.js             # Request system tests
+├── test-matching.js             # Matching system tests
+├── .env                         # Environment variables
+├── API_DOCUMENTATION.md         # User/Request API docs
+├── MATCHING_SYSTEM.md           # Matching API docs
+└── SETUP.md                     # Detailed setup guide
 │   │   ├── userController.js   # User operations
 │   │   ├── requestController.js # Blood request operations
 │   │   └── matchController.js   # Matching logic (coming soon)
@@ -138,9 +162,9 @@ blood-donation-system/
 └── SETUP.md                    # Detailed setup guide
 ```
 
-## 🧪 Testing
+Run the automated test suites:
 
-Run the automated test suite:
+**Test Request System:**
 ```bash
 node test-requests.js
 ```
@@ -149,6 +173,22 @@ This will test:
 - User registration and login
 - Authentication flow
 - Blood request CRUD operations
+- Filtering and search
+- Request updates and cancellation
+
+**Test Matching System:**
+```bash
+node test-matching.js
+```
+
+This will test:
+- Blood type compatibility matching
+- Finding donors for requests
+- Finding requests for donors
+- Distance-based filtering
+- Donation interest workflow
+- Donation confirmation and tracking
+- Donation history
 - Filtering and search
 - Request updates and cancellation
 
