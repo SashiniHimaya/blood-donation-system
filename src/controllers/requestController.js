@@ -1,4 +1,20 @@
 const pool = require("../db");
+const {
+  notifyDonorAboutMatch,
+  notifyUrgentRequest,
+} = require("../services/notificationService");
+
+// Blood type compatibility matrix (for finding compatible donors)
+const bloodCompatibility = {
+  "A+": ["A+", "A-", "O+", "O-"],
+  "A-": ["A-", "O-"],
+  "B+": ["B+", "B-", "O+", "O-"],
+  "B-": ["B-", "O-"],
+  "AB+": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+  "AB-": ["A-", "B-", "AB-", "O-"],
+  "O+": ["O+", "O-"],
+  "O-": ["O-"],
+};
 
 // Create a new blood request
 const createRequest = async (req, res) => {
@@ -74,10 +90,38 @@ const createRequest = async (req, res) => {
     ];
 
     const result = await pool.query(query, values);
+    const newRequest = result.rows[0];
+
+    // Send notifications to compatible donors if urgency is high or critical
+    if ((urgency === 'high' || urgency === 'critical') && latitude && longitude) {
+      try {
+        const compatibleTypes = bloodCompatibility[blood_type];
+        
+        // Find nearby compatible donors
+        const donorQuery = `
+          SELECT user_id, name, email, blood_type, latitude, longitude
+          FROM users
+          WHERE blood_type = ANY($1)
+            AND role IN ('donor', 'both')
+            AND is_available = true
+            AND latitude IS NOT NULL
+            AND longitude IS NOT NULL
+        `;
+        const donorResult = await pool.query(donorQuery, [compatibleTypes]);
+        
+        if (donorResult.rows.length > 0) {
+          // Notify all compatible donors (broadcast for urgent/critical)
+          await notifyUrgentRequest(donorResult.rows, newRequest);
+        }
+      } catch (emailError) {
+        console.error("Error sending donor notifications:", emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     res.status(201).json({
       message: "Blood request created successfully",
-      request: result.rows[0],
+      request: newRequest,
     });
   } catch (error) {
     console.error("Error creating blood request:", error);

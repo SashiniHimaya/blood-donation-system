@@ -15,9 +15,10 @@ A RESTful API system that connects blood donors with recipients in need, built w
 - ✅ **Distance-Based Search**: Find nearby donors using Haversine formula
 - ✅ **Donation Management**: Express interest, confirm, and track donations
 - ✅ **Donation History**: Complete donation tracking for donors
+- ✅ **Email Notifications**: Real-time alerts for matches, confirmations, and urgent requests
 
 ### Coming Soon
-- ⏳ Real-time Notifications (Email/SMS)
+- ⏳ SMS Notifications
 - ⏳ Admin Dashboard
 - ⏳ Analytics & Reporting
 - ⏳ Mobile App Integration
@@ -53,9 +54,18 @@ A RESTful API system that connects blood donors with recipients in need, built w
    DB_PORT=5432
    JWT_SECRET=your_secret_key_here
    PORT=5000
-   ```
-
+   
+   # Email Configuration (optional for notifications)
 4. **Set up the database**
+   ```bash
+   # Create database
+   createdb blood_donation_db
+   
+   # Run schema
+   psql -U your_username -d blood_donation_db -f database/schema.sql
+   
+   # Add notification preferences (optional)
+   psql -U your_username -d blood_donation_db -f database/add_notification_preferences.sql
    ```bash
    # Create database
    createdb blood_donation_db
@@ -70,15 +80,21 @@ A RESTful API system that connects blood donors with recipients in need, built w
    npm start
    
    # Development (with auto-reload)
-   npm run dev
-   ```
-
 6. **Test the API**
    ```bash
    # Test user and request system
    node test-requests.js
    
    # Test matching system
+   node test-matching.js
+   
+   # Test email notifications
+## 📚 API Documentation
+
+Full API documentation is available in:
+- [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) - User & Request APIs
+- [MATCHING_SYSTEM.md](./MATCHING_SYSTEM.md) - Matching & Donation APIs
+- [NOTIFICATION_SYSTEM.md](./NOTIFICATION_SYSTEM.md) - Email Notification System
    node test-matching.js
    ```
 
@@ -120,17 +136,17 @@ GET /api/requests?blood_type=A+&urgency=high&city=New York
 GET /api/match/request/1/donors?maxDistance=30
 ```
 
-**Express Interest in Donating**
-```bash
-POST /api/match/donate/1
-Authorization: Bearer <token>
-{
-  "units": 1,
+## 📁 Project Structure
+
+```
+blood-donation-system/
 ├── src/
 │   ├── controllers/
 │   │   ├── userController.js    # User operations
 │   │   ├── requestController.js # Blood request operations
 │   │   └── matchController.js   # Matching & donation logic
+│   ├── services/
+│   │   └── notificationService.js # Email notifications
 │   ├── middleware/
 │   │   └── authMiddleware.js    # JWT authentication
 │   ├── routes/
@@ -139,22 +155,19 @@ Authorization: Bearer <token>
 │   │   └── matchRoutes.js
 │   ├── app.js                   # Express app
 │   └── db.js                    # Database connection
+├── database/
+│   ├── schema.sql               # Main database schema
+│   └── add_notification_preferences.sql
 ├── test-requests.js             # Request system tests
 ├── test-matching.js             # Matching system tests
+├── test-notifications.js        # Email notification tests
 ├── .env                         # Environment variables
 ├── API_DOCUMENTATION.md         # User/Request API docs
 ├── MATCHING_SYSTEM.md           # Matching API docs
+├── NOTIFICATION_SYSTEM.md       # Email system docs
+├── IMPLEMENTATION_SUMMARY.md    # Complete feature overview
 └── SETUP.md                     # Detailed setup guide
-│   │   ├── userController.js   # User operations
-│   │   ├── requestController.js # Blood request operations
-│   │   └── matchController.js   # Matching logic (coming soon)
-│   ├── middleware/
-│   │   └── authMiddleware.js   # JWT authentication
-│   ├── routes/
-│   │   ├── userRoutes.js
-│   │   ├── requestRoutes.js
-│   │   └── matchRoutes.js
-│   ├── app.js                  # Express app
+``` ├── app.js                  # Express app
 │   └── db.js                   # Database connection
 ├── test-requests.js            # API test script
 ├── .env                        # Environment variables
@@ -189,8 +202,18 @@ This will test:
 - Donation interest workflow
 - Donation confirmation and tracking
 - Donation history
-- Filtering and search
-- Request updates and cancellation
+
+**Test Email Notifications:**
+```bash
+node test-notifications.js
+```
+
+This will test:
+- Welcome emails on registration
+- Urgent request broadcasts
+- Donation interest notifications
+- Donation confirmation emails
+- Donation cancellation emails
 
 ## 📊 Database Schema
 
@@ -198,12 +221,19 @@ This will test:
 - User information (donors/recipients)
 - Blood type and availability
 - Location data for matching
+### Donations Table
+- Match donors with requests
+- Track donation status
+- Record donation history
 
-### Blood Requests Table
-- Request details and urgency
-- Hospital information
-- Contact details
-- Status tracking
+## 🛠️ Tech Stack
+
+- **Backend**: Node.js, Express.js
+- **Database**: PostgreSQL
+- **Authentication**: JWT (JSON Web Tokens)
+- **Email Service**: Nodemailer (Gmail SMTP)
+- **Security**: bcrypt for password hashing
+- **Validation**: express-validator
 
 ### Donations Table (Coming Soon)
 - Match donors with requests
@@ -225,11 +255,11 @@ This will test:
 - Protected routes with token verification
 - SQL injection prevention with parameterized queries
 - Environment variable protection
+---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
+**Status**: Active Development  
+**Version**: 1.1.0  
+**Last Updated**: December 5, 2025
 ## 📝 License
 
 ISC

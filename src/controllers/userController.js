@@ -1,6 +1,7 @@
 const pool = require("../db");
 const bcrypt = require("bcrypt");
-  const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
+const { sendWelcomeEmail } = require("../services/notificationService");
 require("dotenv").config();
 
 
@@ -25,7 +26,22 @@ const registerUser = async (req, res) => {
       [user_name, user_email, hashedPassword, blood_type, location, role]
     );
 
-    res.status(201).json({ success: true, user: result.rows[0] });
+    const newUser = result.rows[0];
+
+    // Send welcome email
+    try {
+      await sendWelcomeEmail({
+        name: newUser.user_name,
+        email: newUser.user_email,
+        blood_type: newUser.blood_type,
+        role: newUser.role,
+      });
+    } catch (emailError) {
+      console.error("Error sending welcome email:", emailError);
+      // Don't fail registration if email fails
+    }
+
+    res.status(201).json({ success: true, user: newUser });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: "Database error" });

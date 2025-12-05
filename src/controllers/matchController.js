@@ -1,4 +1,9 @@
 const pool = require("../db");
+const {
+  notifyDonorAboutMatch,
+  notifyRequesterAboutDonation,
+  notifyDonorAboutConfirmation,
+} = require("../services/notificationService");
 
 // Blood type compatibility matrix
 const bloodCompatibility = {
@@ -326,9 +331,29 @@ const expressDonationInterest = async (req, res) => {
     `;
     const insertResult = await pool.query(insertQuery, [requestId, donorId, units, notes || null]);
 
+    const donation = insertResult.rows[0];
+
+    // Send email notification to requester
+    try {
+      const donorDetailsQuery = `SELECT * FROM users WHERE user_id = $1`;
+      const donorDetailsResult = await pool.query(donorDetailsQuery, [donorId]);
+      const donorDetails = donorDetailsResult.rows[0];
+
+      const requesterQuery = `SELECT * FROM users WHERE user_id = $1`;
+      const requesterResult = await pool.query(requesterQuery, [request.requester_id]);
+      const requester = requesterResult.rows[0];
+
+      if (requester && requester.email) {
+        await notifyRequesterAboutDonation(requester, donorDetails, request);
+      }
+    } catch (emailError) {
+      console.error("Error sending email notification:", emailError);
+      // Don't fail the request if email fails
+    }
+
     res.status(201).json({
       message: "Donation interest recorded successfully",
-      donation: insertResult.rows[0],
+      donation: donation,
     });
   } catch (error) {
     console.error("Error expressing donation interest:", error);
@@ -441,9 +466,31 @@ const updateDonationStatus = async (req, res) => {
       donationId,
     ]);
 
+    const updatedDonation = updateResult.rows[0];
+
+    // Send email notification to donor if status changed to confirmed or cancelled
+    if (status === 'confirmed' || status === 'cancelled') {
+      try {
+        const donorQuery = `SELECT * FROM users WHERE user_id = $1`;
+        const donorResult = await pool.query(donorQuery, [donation.donor_id]);
+        const donor = donorResult.rows[0];
+
+        const requestQuery = `SELECT * FROM blood_requests WHERE request_id = $1`;
+        const requestResult = await pool.query(requestQuery, [donation.request_id]);
+        const request = requestResult.rows[0];
+
+        if (donor && donor.email) {
+          await notifyDonorAboutConfirmation(donor, request, status);
+        }
+      } catch (emailError) {
+        console.error("Error sending email notification:", emailError);
+        // Don't fail the request if email fails
+      }
+    }
+
     res.status(200).json({
       message: "Donation status updated successfully",
-      donation: updateResult.rows[0],
+      donation: updatedDonation,
     });
   } catch (error) {
     console.error("Error updating donation status:", error);
