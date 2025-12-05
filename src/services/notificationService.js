@@ -515,6 +515,96 @@ Together, we save lives!
   return await sendEmail(user.email, subject, html, text);
 };
 
+/**
+ * Notify donor when they become eligible again
+ */
+const notifyEligibilityRestored = async (donor, nextRequestsCount = 0) => {
+  const subject = `✅ You're Eligible to Donate Again!`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #16a34a; color: white; padding: 20px; text-align: center;">
+        <h1 style="margin: 0;">✅ You Can Donate Again!</h1>
+      </div>
+      
+      <div style="padding: 20px;">
+        <p>Dear ${donor.name},</p>
+        
+        <p style="font-size: 18px; color: #16a34a; font-weight: bold;">
+          Good news! You are now eligible to donate blood again.
+        </p>
+        
+        <div style="background-color: #dcfce7; border-left: 4px solid #16a34a; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0;"><strong>It's been 56 days since your last donation!</strong></p>
+          <p style="margin: 10px 0 0 0;">Thank you for waiting the required period. Your dedication to saving lives is appreciated.</p>
+        </div>
+        
+        ${nextRequestsCount > 0 ? `
+        <div style="background-color: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #991b1b;">⚡ ${nextRequestsCount} patient(s) need your blood type right now!</h3>
+          <p style="margin-bottom: 0;">Your blood type (${donor.blood_type}) is in demand. People are waiting for donors like you.</p>
+        </div>
+        ` : ''}
+        
+        <div style="margin: 30px 0; text-align: center;">
+          <a href="${process.env.APP_URL || 'http://localhost:5000'}/api/match/donor/requests" 
+             style="background-color: #dc2626; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 18px; font-weight: bold;">
+            Find Blood Requests
+          </a>
+        </div>
+        
+        <h3>Your Impact:</h3>
+        <p>Every donation can save up to <strong>3 lives</strong>. Thank you for being a hero!</p>
+        
+        <div style="background-color: #f3f4f6; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <h4 style="margin-top: 0;">Before You Donate:</h4>
+          <ul style="margin-bottom: 0;">
+            <li>Get adequate sleep the night before</li>
+            <li>Eat a healthy meal</li>
+            <li>Drink plenty of water</li>
+            <li>Avoid fatty foods 24 hours before</li>
+            <li>Bring a valid ID</li>
+          </ul>
+        </div>
+      </div>
+      
+      <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+      
+      <p style="color: #999; font-size: 12px; padding: 0 20px;">
+        You received this email because 56 days have passed since your last donation.
+      </p>
+    </div>
+  `;
+
+  const text = `
+You're Eligible to Donate Again!
+
+Dear ${donor.name},
+
+Good news! You are now eligible to donate blood again.
+
+It's been 56 days since your last donation! Thank you for waiting the required period. Your dedication to saving lives is appreciated.
+
+${nextRequestsCount > 0 ? `
+⚡ ${nextRequestsCount} patient(s) need your blood type right now!
+Your blood type (${donor.blood_type}) is in demand. People are waiting for donors like you.
+` : ''}
+
+Every donation can save up to 3 lives. Thank you for being a hero!
+
+Before You Donate:
+- Get adequate sleep the night before
+- Eat a healthy meal
+- Drink plenty of water
+- Avoid fatty foods 24 hours before
+- Bring a valid ID
+
+Find blood requests: ${process.env.APP_URL || 'http://localhost:5000'}/api/match/donor/requests
+  `;
+
+  return await sendEmail(donor.email, subject, html, text);
+};
+
 module.exports = {
   sendEmail,
   notifyDonorAboutMatch,
@@ -522,4 +612,5 @@ module.exports = {
   notifyDonorAboutConfirmation,
   notifyUrgentRequest,
   sendWelcomeEmail,
+  notifyEligibilityRestored,
 };

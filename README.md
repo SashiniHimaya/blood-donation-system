@@ -17,10 +17,10 @@ A RESTful API system that connects blood donors with recipients in need, built w
 - ✅ **Donation History**: Complete donation tracking for donors
 - ✅ **Email Notifications**: Real-time alerts for matches, confirmations, and urgent requests
 - ✅ **Admin Dashboard**: Comprehensive system monitoring and management
+- ✅ **Donation Eligibility Checker**: Medical safety compliance with 56-day rule, age/weight requirements, health screening
 
 ### Coming Soon
 - ⏳ SMS Notifications
-- ⏳ Donation Eligibility Checker
 - ⏳ Mobile App Integration
 
 ## 🚀 Quick Start
@@ -69,6 +69,9 @@ A RESTful API system that connects blood donors with recipients in need, built w
    
    # Add admin role support
    psql -U your_username -d blood_donation_db -f database/add_admin_role.sql
+   
+   # Add eligibility tracking (optional, recommended for donor safety)
+   psql -U your_username -d blood_donation_db -f database/add_eligibility_tracking.sql
    ```
 
 5. **Start the server**
@@ -260,10 +263,15 @@ This will test:
 - Protected routes with token verification
 - SQL injection prevention with parameterized queries
 - Environment variable protection
+
+## 📚 Documentation
+
+- **[Eligibility System Guide](./ELIGIBILITY_SYSTEM.md)** - Comprehensive documentation on donor eligibility checking, medical standards, and 56-day rule implementation
+
 ---
 
 **Status**: Active Development  
-**Version**: 1.1.0  
+**Version**: 1.2.0  
 **Last Updated**: December 5, 2025
 ## 📝 License
 

@@ -8,6 +8,8 @@ const {
   getDonationsForRequest,
   updateDonationStatus,
   getMyDonations,
+  checkDonorEligibility,
+  updateHealthInfo,
 } = require("../controllers/matchController");
 
 // Public route - find matching donors for a request
@@ -19,5 +21,9 @@ router.post("/donate/:requestId", authenticateToken, expressDonationInterest);
 router.get("/request/:requestId/donations", authenticateToken, getDonationsForRequest);
 router.put("/donation/:donationId", authenticateToken, updateDonationStatus);
 router.get("/my-donations", authenticateToken, getMyDonations);
+
+// Eligibility routes
+router.get("/eligibility/check", authenticateToken, checkDonorEligibility);
+router.put("/health-info", authenticateToken, updateHealthInfo);
 
 module.exports = router;

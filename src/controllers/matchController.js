@@ -4,6 +4,11 @@ const {
   notifyRequesterAboutDonation,
   notifyDonorAboutConfirmation,
 } = require("../services/notificationService");
+const {
+  isEligibleByDate,
+  getEligibilityStatus,
+  daysUntilEligible,
+} = require("../utils/eligibilityUtils");
 
 // Blood type compatibility matrix
 const bloodCompatibility = {
@@ -275,7 +280,7 @@ const expressDonationInterest = async (req, res) => {
 
     // Verify donor eligibility
     const donorQuery = `
-      SELECT blood_type, role, is_available
+      SELECT blood_type, role, is_available, last_donation_date, date_of_birth, weight_kg, health_conditions
       FROM users
       WHERE user_id = $1
     `;
@@ -290,6 +295,17 @@ const expressDonationInterest = async (req, res) => {
     }
 
     const donor = donorResult.rows[0];
+
+    // Check donation eligibility (56-day rule)
+    const eligibilityStatus = getEligibilityStatus(donor);
+    if (!eligibilityStatus.eligible) {
+      return res.status(400).json({ 
+        error: "You are not currently eligible to donate",
+        eligibility: eligibilityStatus,
+        days_until_eligible: eligibilityStatus.date_eligibility.days_until_eligible,
+        next_eligible_date: eligibilityStatus.date_eligibility.next_eligible_date,
+      });
+    }
 
     // Get request details
     const requestQuery = `
@@ -539,9 +555,136 @@ const getMyDonations = async (req, res) => {
   }
 };
 
+// Check donor eligibility
+const checkDonorEligibility = async (req, res) => {
+  try {
+    const donorId = req.user.userId;
+
+    // Get donor information
+    const query = `
+      SELECT 
+        user_id,
+        user_name as name,
+        blood_type,
+        last_donation_date,
+        date_of_birth,
+        weight_kg,
+        health_conditions,
+        is_available
+      FROM users
+      WHERE user_id = $1
+    `;
+    const result = await pool.query(query, [donorId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const donor = result.rows[0];
+
+    // Get eligibility status
+    const eligibility = getEligibilityStatus(donor);
+
+    // Get donation history count
+    const historyQuery = `
+      SELECT COUNT(*) as total_donations,
+             COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_donations,
+             MAX(donation_date) as last_completed_donation
+      FROM donations
+      WHERE donor_id = $1
+    `;
+    const history = await pool.query(historyQuery, [donorId]);
+
+    res.json({
+      donor: {
+        id: donor.user_id,
+        name: donor.name,
+        blood_type: donor.blood_type,
+        is_available: donor.is_available,
+      },
+      eligibility,
+      donation_history: history.rows[0],
+      message: eligibility.eligible 
+        ? '✅ You are eligible to donate blood!'
+        : `❌ Not currently eligible. ${eligibility.reasons.join('. ')}`,
+    });
+  } catch (error) {
+    console.error("Error checking donor eligibility:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Update health information
+const updateHealthInfo = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { date_of_birth, weight_kg, health_conditions } = req.body;
+
+    // Build update query dynamically
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (date_of_birth) {
+      updates.push(`date_of_birth = $${paramCount}`);
+      values.push(date_of_birth);
+      paramCount++;
+    }
+
+    if (weight_kg !== undefined) {
+      updates.push(`weight_kg = $${paramCount}`);
+      values.push(weight_kg);
+      paramCount++;
+    }
+
+    if (health_conditions !== undefined) {
+      updates.push(`health_conditions = $${paramCount}`);
+      values.push(health_conditions);
+      paramCount++;
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    values.push(userId);
+    const query = `
+      UPDATE users
+      SET ${updates.join(', ')}
+      WHERE user_id = $${paramCount}
+      RETURNING user_id, user_name as name, date_of_birth, weight_kg, health_conditions
+    `;
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Get updated eligibility
+    const eligibility = getEligibilityStatus(result.rows[0]);
+
+    res.json({
+      message: "Health information updated successfully",
+      user: result.rows[0],
+      eligibility,
+    });
+  } catch (error) {
+    console.error("Error updating health info:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   findMatchingDonors,
   findRequestsForDonor,
+  expressDonationInterest,
+  getDonationsForRequest,
+  updateDonationStatus,
+  getMyDonations,
+  checkDonorEligibility,
+  updateHealthInfo,
+};
   expressDonationInterest,
   getDonationsForRequest,
   updateDonationStatus,
