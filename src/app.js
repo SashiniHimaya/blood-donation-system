@@ -5,6 +5,7 @@ const express = require("express");
 const userRoutes = require("./routes/userRoutes");
 const requestRoutes = require("./routes/requestRoutes");
 const matchRoutes = require("./routes/matchRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -19,6 +20,9 @@ console.log("✅ Request routes registered at /api/requests");
 
 app.use("/api/match", matchRoutes);
 console.log("✅ Match routes registered at /api/match");
+
+app.use("/api/admin", adminRoutes);
+console.log("✅ Admin routes registered at /api/admin");
 
 
 const PORT = process.env.PORT || 5000;

@@ -9,18 +9,18 @@ A RESTful API system that connects blood donors with recipients in need, built w
 - ✅ **User Management**: Profile creation and updates for donors and recipients
 - ✅ **Blood Request System**: Complete CRUD operations for blood requests
 - ✅ **Advanced Filtering**: Search requests by blood type, urgency, location, and status
-- ✅ **Role-Based Access**: Support for donors, recipients, and both
+- ✅ **Role-Based Access**: Support for donors, recipients, admins, and both
 - ✅ **Request Prioritization**: Automatic sorting by urgency (critical → high → medium → low)
 - ✅ **Donor-Recipient Matching**: Intelligent blood type compatibility matching
 - ✅ **Distance-Based Search**: Find nearby donors using Haversine formula
 - ✅ **Donation Management**: Express interest, confirm, and track donations
 - ✅ **Donation History**: Complete donation tracking for donors
 - ✅ **Email Notifications**: Real-time alerts for matches, confirmations, and urgent requests
+- ✅ **Admin Dashboard**: Comprehensive system monitoring and management
 
 ### Coming Soon
 - ⏳ SMS Notifications
-- ⏳ Admin Dashboard
-- ⏳ Analytics & Reporting
+- ⏳ Donation Eligibility Checker
 - ⏳ Mobile App Integration
 
 ## 🚀 Quick Start
@@ -66,12 +66,9 @@ A RESTful API system that connects blood donors with recipients in need, built w
    
    # Add notification preferences (optional)
    psql -U your_username -d blood_donation_db -f database/add_notification_preferences.sql
-   ```bash
-   # Create database
-   createdb blood_donation_db
    
-   # Run schema
-   psql -U your_username -d blood_donation_db -f database/schema.sql
+   # Add admin role support
+   psql -U your_username -d blood_donation_db -f database/add_admin_role.sql
    ```
 
 5. **Start the server**
@@ -89,10 +86,18 @@ A RESTful API system that connects blood donors with recipients in need, built w
    node test-matching.js
    
    # Test email notifications
+   node test-notifications.js
+   
+   # Test admin dashboard
+   node test-admin.js
+   ```
 ## 📚 API Documentation
 
 Full API documentation is available in:
 - [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) - User & Request APIs
+- [MATCHING_SYSTEM.md](./MATCHING_SYSTEM.md) - Matching & Donation APIs
+- [NOTIFICATION_SYSTEM.md](./NOTIFICATION_SYSTEM.md) - Email Notification System
+- [ADMIN_DASHBOARD.md](./ADMIN_DASHBOARD.md) - Admin Dashboard & Analytics
 - [MATCHING_SYSTEM.md](./MATCHING_SYSTEM.md) - Matching & Donation APIs
 - [NOTIFICATION_SYSTEM.md](./NOTIFICATION_SYSTEM.md) - Email Notification System
    node test-matching.js
