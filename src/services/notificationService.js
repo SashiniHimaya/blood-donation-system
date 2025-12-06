@@ -1,22 +1,32 @@
 const nodemailer = require("nodemailer");
 
-// Create reusable transporter
-const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+// Create reusable transporter only if email is configured
+let transporter = null;
+let emailEnabled = false;
 
-// Verify transporter configuration
-transporter.verify((error, success) => {
-  if (error) {
-    console.log("Email transporter error:", error);
-  } else {
-    console.log("Email server is ready to send messages");
-  }
-});
+if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+  transporter = nodemailer.createTransporter({
+    service: process.env.EMAIL_SERVICE || "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+
+  // Verify transporter configuration
+  transporter.verify((error, success) => {
+    if (error) {
+      console.log("⚠️  Email transporter error:", error.message);
+      console.log("📧 Email notifications are disabled");
+      emailEnabled = false;
+    } else {
+      console.log("✅ Email server is ready to send messages");
+      emailEnabled = true;
+    }
+  });
+} else {
+  console.log("📧 Email not configured - notifications will be skipped");
+}
 
 /**
  * Send email notification
@@ -26,6 +36,12 @@ transporter.verify((error, success) => {
  * @param {string} text - Plain text content (fallback)
  */
 const sendEmail = async (to, subject, html, text) => {
+  // Skip if email is not configured
+  if (!transporter || !emailEnabled) {
+    console.log(`📧 Email skipped (not configured): ${subject} to ${to}`);
+    return { success: false, message: "Email not configured" };
+  }
+
   try {
     const mailOptions = {
       from: `Blood Donation System <${process.env.EMAIL_USER}>`,
@@ -36,7 +52,7 @@ const sendEmail = async (to, subject, html, text) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent to ${to}: ${info.messageId}`);
+    console.log(`✅ Email sent to ${to}: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error(`Error sending email to ${to}:`, error);

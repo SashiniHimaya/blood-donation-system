@@ -684,7 +684,6 @@ module.exports = {
   getMyDonations,
   checkDonorEligibility,
   updateHealthInfo,
-};
   expressDonationInterest,
   getDonationsForRequest,
   updateDonationStatus,

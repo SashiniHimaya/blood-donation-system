@@ -43,8 +43,8 @@ COMMENT ON FUNCTION update_last_donation_date IS 'Automatically update last_dona
 CREATE OR REPLACE VIEW donor_eligibility_status AS
 SELECT 
     u.user_id,
-    u.user_name,
-    u.user_email,
+    u.name AS user_name,
+    u.email AS user_email,
     u.blood_type,
     u.last_donation_date,
     u.date_of_birth,
